@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aus-backyard-intelligence"
+version = "0.2.0"
+description = "Backyard opportunity research platform with pool detection and jurisdiction-aware lead context."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "geopandas",
+  "pyproj",
+  "rasterio",
+  "requests",
+  "shapely",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+]
+yolo = [
+  "ultralytics>=8.0",
+  "opencv-python-headless>=4.8",
+  "onnxruntime>=1.16",
+  "Pillow>=10.0",
+]
+# Optional shared cache for OSINT feeds + detection results. With no Redis
+# configured the app transparently uses an in-memory cache (see cache_backend.py).
+redis = [
+  "redis>=5.0",
+]
+
+[project.scripts]
+abi-demo = "aus_backyard_intelligence.app:main"
+abi-qgis = "aus_backyard_intelligence.qgis:main"
+abi-build-features = "aus_backyard_intelligence.pipeline.feature_builder:main"
+abi-sources = "aus_backyard_intelligence.pipeline.sources:main"
+abi-map-export = "aus_backyard_intelligence.map_export:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["aus_backyard_intelligence*"]
+
+# Ship the web UI and demo dataset inside the wheel — the app is unusable without them.
+[tool.setuptools.package-data]
+aus_backyard_intelligence = [
+  "static/**/*",
+  "data/**/*.json",
+  "data/**/*.geojson",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,15 @@
+{
+  "name": "aus-backyard-intelligence-frontend-tests",
+  "private": true,
+  "packageManager": "pnpm@11.9.0",
+  "type": "module",
+  "scripts": {
+    "test:js": "node --test tests/*.test.mjs",
+    "test:e2e": "node tests/rendered_layers.playwright.mjs",
+    "test": "npm run test:js && npm run test:e2e"
+  },
+  "devDependencies": {
+    "maplibre-gl": "4.5.0",
+    "playwright": "1.61.1"
+  }
+}

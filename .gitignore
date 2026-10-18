@@ -1,0 +1,63 @@
+.venv/
+.venv-codex/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+node_modules/
+.pnpm-store/
+test-results/
+build/
+dist/
+*.egg-info/
+CACHEDIR.TAG
+gitignore.txt
+
+# Logs & local run output
+logs/
+artifacts/
+*.log
+qgis-error.txt
+
+# Model weights & training runs (too large for git; see README "Model weights")
+*.pt
+*.onnx
+models/
+runs/
+.ultralytics/
+data/pool_ft/
+data/pool_dataset/
+
+# Data files (exclude real downloaded datasets & property databases to protect privacy)
+aus_backyard_intelligence/data/raw/
+aus_backyard_intelligence/data/interim/
+aus_backyard_intelligence/data/derived/*
+!aus_backyard_intelligence/data/derived/sample_properties.json
+
+# Local evaluation state: user feedback and scan output hold property coordinates
+eval_data/feedback.jsonl
+eval_data/training_candidates.jsonl
+eval_data/eval_history.jsonl
+
+# QGIS local state
+symbology-style.db
+
+# Environment variables & Secret Keys
+.env
+.env.*
+!.env.example
+secrets.json
+credentials.json
+*.pem
+*.key
+*creds*
+*credentials*
+
+# Scratch & Dev tools
+scratch/
+.vscode/settings.json

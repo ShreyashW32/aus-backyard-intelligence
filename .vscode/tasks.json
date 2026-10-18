@@ -1,0 +1,164 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Tests",
+      "type": "shell",
+      "command": ".\\.venv\\Scripts\\python.exe",
+      "args": [
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-v"
+      ],
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Demo Server",
+      "type": "shell",
+      "command": ".\\.venv\\Scripts\\python.exe",
+      "args": [
+        "-m",
+        "aus_backyard_intelligence"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Check Demo Data",
+      "type": "shell",
+      "command": ".\\.venv\\Scripts\\python.exe",
+      "args": [
+        "-m",
+        "aus_backyard_intelligence",
+        "--check"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Check QGIS",
+      "type": "shell",
+      "command": ".\\.venv\\Scripts\\python.exe",
+      "args": [
+        "-m",
+        "aus_backyard_intelligence.qgis",
+        "--check"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "List QGIS Algorithms",
+      "type": "shell",
+      "command": ".\\.venv\\Scripts\\python.exe",
+      "args": [
+        "-m",
+        "aus_backyard_intelligence.qgis",
+        "--list-algorithms",
+        "--limit",
+        "25"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Write Source Manifest",
+      "type": "shell",
+      "command": ".\\.venv\\Scripts\\python.exe",
+      "args": [
+        "-m",
+        "aus_backyard_intelligence.pipeline.sources",
+        "--write-manifest",
+        "aus_backyard_intelligence\\data\\source_manifest.json"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Bootstrap Project",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        ".\\scripts\\bootstrap_project.ps1"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Export Ranked Map",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        ".\\scripts\\export_ranked_map.ps1",
+        "-Module",
+        "pool_3d",
+        "-Lga",
+        "Brisbane City",
+        "-TopK",
+        "3"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Export And Open Ranked Map",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        ".\\scripts\\export_ranked_map.ps1",
+        "-Module",
+        "pool_3d",
+        "-Lga",
+        "Brisbane City",
+        "-TopK",
+        "3",
+        "-OpenQGIS"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Prepare 3D QGIS Project",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        ".\\scripts\\prepare_qgis_3d_project.ps1"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Prepare And Open 3D QGIS Project",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        ".\\scripts\\prepare_qgis_3d_project.ps1",
+        "-OpenQGIS"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Launch Ready 3D View",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        ".\\scripts\\launch_qgis_3d_ready.ps1"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

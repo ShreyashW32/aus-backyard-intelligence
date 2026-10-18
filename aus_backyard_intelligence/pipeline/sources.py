@@ -1,0 +1,111 @@
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+
+SOURCE_MANIFEST = {
+    "verified_on": "2026-04-29",
+    "notes": [
+        "All sources below are official Queensland Government or Moreton Bay City Council open-data pages.",
+        "The public Queensland imagery basemap is authoritative and high quality, but publicly exposed SISP aerial imagery can be about three years old.",
+        "These entries are dataset pages rather than large binary downloads so the project can stay lightweight until you choose what to fetch locally.",
+    ],
+    "sources": [
+        {
+            "name": "Cadastral data - Queensland series",
+            "scope": "Parcel boundaries and cadastral attributes",
+            "publisher": "Queensland Government",
+            "dataset_url": "https://www.data.qld.gov.au/dataset/cadastral-data-queensland-series",
+            "dataset_last_updated": "2026-04-16",
+            "update_frequency": "Weekly",
+            "license": "CC BY 4.0",
+        },
+        {
+            "name": "Buildings - Queensland series",
+            "scope": "Building outlines and centroids",
+            "publisher": "Queensland Government",
+            "dataset_url": "https://www.data.qld.gov.au/dataset/buildings-queensland-series",
+            "dataset_last_updated": "2026-04-16",
+            "update_frequency": "Non-regular",
+            "license": "CC BY 4.0",
+        },
+        {
+            "name": "Queensland Elevation DEM Public Time Series Service",
+            "scope": "Elevation service for slope and relief sampling",
+            "publisher": "Queensland Government",
+            "dataset_url": "https://www.data.qld.gov.au/dataset/queensland-elevation-dem-public-time-series-service",
+            "dataset_last_updated": "2025-01-31",
+            "update_frequency": "Near-realtime",
+            "license": "CC BY 3.0",
+        },
+        {
+            "name": "Queensland elevation data extents",
+            "scope": "Coverage check for LiDAR and elevation availability",
+            "publisher": "Queensland Government",
+            "dataset_url": "https://www.data.qld.gov.au/dataset/queensland-elevation-data-extents",
+            "dataset_last_updated": "2025-11-10",
+            "update_frequency": "Non-regular",
+            "license": "CC BY 3.0",
+        },
+        {
+            "name": "Queensland LiDAR Data - LiDAR tile footprints",
+            "scope": "Tile footprint coverage for higher-resolution elevation capture",
+            "publisher": "Queensland Government",
+            "dataset_url": "https://www.data.qld.gov.au/dataset/queensland-lidar-data-lidar-tile-footprints",
+            "dataset_last_updated": "2025-01-31",
+            "update_frequency": "Non-regular",
+            "license": "CC BY 4.0",
+        },
+        {
+            "name": "Queensland Imagery Latest State Program Public Basemap Service",
+            "scope": "Current public imagery backdrop for mapping and QA",
+            "publisher": "Queensland Government",
+            "dataset_url": "https://www.data.qld.gov.au/dataset/queensland-imagery-latest-state-program-public-basemap-service",
+            "dataset_last_updated": None,
+            "update_frequency": "Periodic",
+            "license": "CC BY 4.0",
+            "important_note": "Publicly available SISP imagery is generally three years old or older.",
+        },
+        {
+            "name": "Vegetation 2015 — Regional Ecosystems",
+            "scope": "Moreton Bay vegetation proxy layer",
+            "publisher": "Moreton Bay City Council",
+            "dataset_url": "https://data.moretonbay.qld.gov.au/explore/dataset/vegetation-2015-regional-ecosystems/",
+            "dataset_last_updated": None,
+            "update_frequency": "Council-managed",
+            "license": "Council open data",
+        },
+        {
+            "name": "Protected Vegetation — Significant Urban Vegetation",
+            "scope": "Moreton Bay planning and vegetation constraint proxy",
+            "publisher": "Moreton Bay City Council",
+            "dataset_url": "https://data.moretonbay.qld.gov.au/explore/dataset/protected-vegetation-natural-assets-local-law-2003-significant-urban-vegetation/table/",
+            "dataset_last_updated": None,
+            "update_frequency": "Council-managed",
+            "license": "Council open data",
+        },
+    ],
+}
+
+
+def write_manifest(destination: str | Path) -> Path:
+    destination_path = Path(destination)
+    destination_path.parent.mkdir(parents=True, exist_ok=True)
+    destination_path.write_text(json.dumps(SOURCE_MANIFEST, indent=2), encoding="utf-8")
+    return destination_path
+
+
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description="Print or write the official open-data manifest for this project.")
+    parser.add_argument("--write-manifest", help="Optional path to write the manifest JSON file.")
+    args = parser.parse_args(argv)
+    if args.write_manifest:
+        path = write_manifest(args.write_manifest)
+        print(f"Wrote source manifest to {path}")
+        return
+    print(json.dumps(SOURCE_MANIFEST, indent=2))
+
+
+if __name__ == "__main__":
+    main()

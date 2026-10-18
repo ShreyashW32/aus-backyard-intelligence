@@ -1,0 +1,206 @@
+{
+ "created_at": "2026-07-19T14:02:42",
+ "build": "accuracy-pool-v3-valid",
+ "detector_model": "yolov11s",
+ "evaluation_split": "development",
+ "cells_scanned": 4,
+ "cells_total_labelled": 50,
+ "labels_covered": 413,
+ "detections_seen": 223,
+ "labels": 413,
+ "tp": 87,
+ "fn": 10,
+ "fp": 21,
+ "tn": 295,
+ "recall": 0.897,
+ "recall_ci_95": {
+  "low": 0.821,
+  "high": 0.943,
+  "confidence": 0.95,
+  "method": "Wilson score",
+  "n": 97
+ },
+ "fp_rate": 0.066,
+ "fp_rate_ci_95": {
+  "low": 0.044,
+  "high": 0.099,
+  "confidence": 0.95,
+  "method": "Wilson score",
+  "n": 316
+ },
+ "precision_proxy": 0.806,
+ "f1_proxy": 0.849,
+ "solar_labels": 0,
+ "solar_tp": 0,
+ "solar_fn": 0,
+ "solar_recall": null,
+ "solar_recall_ci_95": null,
+ "no_solar_labels": 0,
+ "solar_fp": 0,
+ "solar_tn": 0,
+ "solar_fp_rate": null,
+ "solar_fp_rate_ci_95": null,
+ "solar_precision_proxy": null,
+ "solar_detections_seen": 497,
+ "dataset_profile": {
+  "all_labels": {
+   "total": 1114,
+   "by_source": {
+    "osm-bootstrap": 1052,
+    "feedback": 62
+   },
+   "by_area": {
+    "pitch-bench": 874,
+    "Sydney NSW": 188,
+    "(blank)": 52
+   },
+   "by_label": {
+    "pool": 584,
+    "no_pool": 529,
+    "solar": 1
+   },
+   "by_split": {
+    "development": 1114
+   },
+   "osm_bootstrap_share": 0.944
+  },
+  "selected_split": {
+   "total": 1114,
+   "by_source": {
+    "osm-bootstrap": 1052,
+    "feedback": 62
+   },
+   "by_area": {
+    "pitch-bench": 874,
+    "Sydney NSW": 188,
+    "(blank)": 52
+   },
+   "by_label": {
+    "pool": 584,
+    "no_pool": 529,
+    "solar": 1
+   },
+   "by_split": {
+    "development": 1114
+   },
+   "osm_bootstrap_share": 0.944
+  },
+  "evaluated_subset": {
+   "total": 413,
+   "by_source": {
+    "osm-bootstrap": 410,
+    "feedback": 3
+   },
+   "by_area": {
+    "pitch-bench": 410,
+    "(blank)": 3
+   },
+   "by_label": {
+    "no_pool": 316,
+    "pool": 97
+   },
+   "by_split": {
+    "development": 413
+   },
+   "osm_bootstrap_share": 0.993
+  }
+ },
+ "per_area": {
+  "(blank)": {
+   "labels": 3,
+   "tp": 1,
+   "fn": 1,
+   "fp": 0,
+   "tn": 1,
+   "recall": 0.5,
+   "recall_ci_95": {
+    "low": 0.095,
+    "high": 0.905,
+    "confidence": 0.95,
+    "method": "Wilson score",
+    "n": 2
+   },
+   "fp_rate": 0.0,
+   "fp_rate_ci_95": {
+    "low": 0.0,
+    "high": 0.793,
+    "confidence": 0.95,
+    "method": "Wilson score",
+    "n": 1
+   },
+   "precision_proxy": 1.0,
+   "f1_proxy": 0.667,
+   "solar_labels": 0,
+   "solar_tp": 0,
+   "solar_fn": 0,
+   "solar_recall": null,
+   "solar_recall_ci_95": null,
+   "no_solar_labels": 0,
+   "solar_fp": 0,
+   "solar_tn": 0,
+   "solar_fp_rate": null,
+   "solar_fp_rate_ci_95": null,
+   "solar_precision_proxy": null
+  },
+  "pitch-bench": {
+   "labels": 410,
+   "tp": 86,
+   "fn": 9,
+   "fp": 21,
+   "tn": 294,
+   "recall": 0.905,
+   "recall_ci_95": {
+    "low": 0.83,
+    "high": 0.949,
+    "confidence": 0.95,
+    "method": "Wilson score",
+    "n": 95
+   },
+   "fp_rate": 0.067,
+   "fp_rate_ci_95": {
+    "low": 0.044,
+    "high": 0.1,
+    "confidence": 0.95,
+    "method": "Wilson score",
+    "n": 315
+   },
+   "precision_proxy": 0.804,
+   "f1_proxy": 0.851,
+   "solar_labels": 0,
+   "solar_tp": 0,
+   "solar_fn": 0,
+   "solar_recall": null,
+   "solar_recall_ci_95": null,
+   "no_solar_labels": 0,
+   "solar_fp": 0,
+   "solar_tn": 0,
+   "solar_fp_rate": null,
+   "solar_fp_rate_ci_95": null,
+   "solar_precision_proxy": null
+  }
+ },
+ "marketing_audit": {
+  "pool_national_claim_eligible": false,
+  "solar_claim_eligible": false,
+  "claim_scope": "development_only",
+  "qualified_metros": [],
+  "blockers": [
+   "This is a development-set run, not an untouched holdout evaluation.",
+   "OSM-bootstrap labels measure pools already represented in OSM, not recall against reality.",
+   "The evaluated subset includes pitch-bench, which is excluded from marketing metrics.",
+   "Some evaluated labels have no city/area provenance.",
+   "Every marketing label must carry split=holdout.",
+   "Every marketing label must be independently hand-labelled (source=human-holdout).",
+   "Need at least 3 holdout metros with 150+ pool and 150+ no-pool labels each; found 0.",
+   "The run covered 4 of 50 labelled cells; publishable evaluation must cover all holdout cells."
+  ],
+  "solar_blockers": [
+   "Need 100+ hand-labelled solar positives; found 0.",
+   "Need 100+ hand-labelled no-solar negatives; found 0.",
+   "Solar validation must also cover at least 3 qualified metros."
+  ]
+ },
+ "approved_wording": "Development benchmark only; national pool recall is unknown. Quote results only with the evaluated areas, ground-truth sources, and 95% confidence interval.",
+ "errors": [],
+ "note": "precision_proxy judges only labelled points: detections away from any label are not counted. OSM bootstrap and product feedback are development data and cannot establish national performance."
+}

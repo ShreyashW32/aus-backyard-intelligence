@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en" data-model-status="loading">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Selected Property 3D Model</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07111f;
+      --panel: rgba(8, 18, 33, .91);
+      --panel-soft: rgba(15, 31, 51, .78);
+      --line: rgba(148, 163, 184, .18);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #2dd4bf;
+      --accent-2: #60a5fa;
+      --yard: #fbbf24;
+      --danger: #f87171;
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    button, a { font: inherit; }
+    .top-bar {
+      position: absolute;
+      inset: 0 0 auto 0;
+      z-index: 20;
+      min-height: 66px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 10px 18px;
+      background: linear-gradient(180deg, rgba(5, 13, 25, .98), rgba(5, 13, 25, .87));
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(18px);
+    }
+    .back-link {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 38px;
+      padding: 0 12px;
+      color: #ccfbf1;
+      border: 1px solid rgba(45, 212, 191, .3);
+      border-radius: 10px;
+      text-decoration: none;
+      font-size: .78rem;
+      font-weight: 750;
+      background: rgba(13, 148, 136, .1);
+    }
+    .back-link:hover { background: rgba(13, 148, 136, .2); }
+    .title-block { min-width: 0; flex: 1; }
+    .eyebrow {
+      margin: 0 0 2px;
+      color: var(--accent);
+      font-size: .63rem;
+      font-weight: 800;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: clamp(.92rem, 1.6vw, 1.2rem);
+      line-height: 1.2;
+    }
+    .scope-badge {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(96, 165, 250, .28);
+      background: rgba(30, 64, 175, .14);
+      color: #bfdbfe;
+      font-size: .68rem;
+      font-weight: 750;
+    }
+    .scope-badge::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent-2);
+      box-shadow: 0 0 12px var(--accent-2);
+    }
+    #model-viewport { position: absolute; inset: 0; overflow: hidden; }
+    #scene-canvas { width: 100%; height: 100%; display: block; touch-action: none; }
+    .model-toolbar {
+      position: absolute;
+      z-index: 12;
+      top: 82px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: var(--panel);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, .34);
+      backdrop-filter: blur(18px);
+    }
+    .model-toolbar button {
+      min-height: 34px;
+      padding: 0 11px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      color: #cbd5e1;
+      background: transparent;
+      cursor: pointer;
+      font-size: .7rem;
+      font-weight: 750;
+    }
+    .model-toolbar button:hover,
+    .model-toolbar button.active,
+    .model-toolbar button[aria-pressed="true"] {
+      color: #f0fdfa;
+      border-color: rgba(45, 212, 191, .3);
+      background: rgba(13, 148, 136, .18);
+    }
+    .info-panel, .legend-panel {
+      position: absolute;
+      z-index: 11;
+      bottom: 18px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel);
+      box-shadow: 0 18px 55px rgba(0, 0, 0, .42);
+      backdrop-filter: blur(18px);
+    }
+    .info-panel {
+      left: 18px;
+      width: min(390px, calc(100vw - 36px));
+      padding: 17px;
+    }
+    .info-panel h2 { margin: 2px 0 3px; font-size: 1.03rem; }
+    .sub { color: var(--muted); font-size: .75rem; }
+    .identity-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .identity-chip {
+      max-width: 100%;
+      padding: 5px 8px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      border-radius: 7px;
+      background: rgba(148, 163, 184, .1);
+      color: #cbd5e1;
+      font: 650 .65rem ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .identity-chip.source { color: #fde68a; background: rgba(217, 119, 6, .14); }
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+      margin-top: 13px;
+    }
+    .metric {
+      min-width: 0;
+      padding: 8px;
+      border: 1px solid rgba(148, 163, 184, .11);
+      border-radius: 9px;
+      background: rgba(15, 23, 42, .55);
+    }
+    .metric span { display: block; color: var(--muted); font-size: .56rem; font-weight: 750; text-transform: uppercase; letter-spacing: .06em; }
+    .metric strong { display: block; margin-top: 3px; font-size: .78rem; white-space: nowrap; }
+    .explanation {
+      margin: 12px 0 0;
+      color: #cbd5e1;
+      font-size: .7rem;
+      line-height: 1.48;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .provenance {
+      margin-top: 11px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: .63rem;
+      line-height: 1.45;
+    }
+    .provenance strong { color: #fde68a; }
+    .legend-panel { right: 18px; width: 235px; padding: 14px; }
+    .legend-panel h3 { margin: 0 0 10px; color: var(--muted); font-size: .63rem; letter-spacing: .1em; text-transform: uppercase; }
+    .legend-row { display: flex; align-items: center; gap: 8px; margin-top: 7px; color: #dbeafe; font-size: .68rem; }
+    .legend-swatch { width: 14px; height: 10px; flex: 0 0 auto; border-radius: 3px; box-shadow: 0 0 12px rgba(255,255,255,.06); }
+    .legend-row[hidden] { display: none; }
+    .north {
+      position: absolute;
+      z-index: 10;
+      top: 84px;
+      right: 22px;
+      width: 46px;
+      height: 63px;
+      display: grid;
+      justify-items: center;
+      color: #f8fafc;
+      font-size: .65rem;
+      font-weight: 900;
+      text-shadow: 0 2px 8px #000;
+      pointer-events: none;
+    }
+    .north::after {
+      content: "";
+      width: 2px;
+      height: 38px;
+      margin-top: 3px;
+      background: linear-gradient(var(--accent), transparent);
+      clip-path: polygon(50% 0, 100% 25%, 64% 25%, 64% 100%, 36% 100%, 36% 25%, 0 25%);
+    }
+    .loader, .error-state {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: radial-gradient(circle at 50% 45%, rgba(21, 49, 67, .88), rgba(5, 13, 25, .97));
+      transition: opacity .3s ease;
+    }
+    .loader.hidden { opacity: 0; pointer-events: none; }
+    .load-card, .error-card { text-align: center; max-width: 470px; }
+    .spinner { width: 40px; height: 40px; margin: 0 auto 14px; border: 3px solid rgba(255,255,255,.1); border-top-color: var(--accent); border-radius: 50%; animation: spin .75s linear infinite; }
+    .load-card strong { display: block; font-size: .9rem; }
+    .load-card span { display: block; margin-top: 5px; color: var(--muted); font-size: .72rem; }
+    .error-state { display: none; }
+    .error-state.visible { display: grid; }
+    .error-card h2 { margin: 0 0 8px; }
+    .error-card p { margin: 0 0 15px; color: var(--muted); line-height: 1.5; }
+    .error-card a { color: #ccfbf1; }
+    .error-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 9px; }
+    .error-actions a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 38px;
+      padding: 0 13px;
+      border: 1px solid rgba(45, 212, 191, .34);
+      border-radius: 9px;
+      background: rgba(13, 148, 136, .12);
+      text-decoration: none;
+      font-size: .74rem;
+      font-weight: 750;
+    }
+    .error-actions a.secondary { border-color: rgba(96, 165, 250, .32); background: rgba(30, 64, 175, .14); color: #dbeafe; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 760px) {
+      .top-bar { min-height: 58px; padding: 8px; gap: 8px; }
+      .back-link { min-height: 34px; padding: 0 9px; font-size: .68rem; }
+      .scope-badge { display: none; }
+      .model-toolbar { top: 68px; max-width: calc(100vw - 16px); overflow-x: auto; }
+      .model-toolbar button { flex: 0 0 auto; }
+      .north { top: 70px; right: 8px; }
+      .info-panel { left: 8px; bottom: 8px; width: calc(100vw - 16px); padding: 12px; }
+      .legend-panel { display: none; }
+      .metrics-grid { grid-template-columns: repeat(4, minmax(70px, 1fr)); overflow-x: auto; }
+      .explanation, .provenance { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top-bar">
+    <a class="back-link" href="/">← Map</a>
+    <div class="title-block">
+      <p class="eyebrow">Selected property · interactive 3D</p>
+      <h1 id="page-title">Preparing property model…</h1>
+    </div>
+    <div class="scope-badge" id="scope-badge">Selected property only</div>
+  </header>
+
+  <main id="model-viewport">
+    <canvas id="scene-canvas" aria-label="Interactive 3D reconstruction of the selected property"></canvas>
+
+    <div class="model-toolbar" role="toolbar" aria-label="3D camera controls">
+      <button type="button" data-camera="perspective" class="active">Perspective</button>
+      <button type="button" data-camera="top">Top</button>
+      <button type="button" data-camera="low">Low angle</button>
+      <button type="button" id="wireframe-toggle" aria-pressed="false">Structure lines</button>
+      <button type="button" data-camera="reset">Reset</button>
+    </div>
+
+    <div class="north" aria-hidden="true">N</div>
+
+    <section class="info-panel" aria-label="Selected property model details">
+      <p class="eyebrow">Modelled selection</p>
+      <h2 id="property-title">Selected property</h2>
+      <div class="sub" id="property-subtitle">Loading geometry…</div>
+      <div class="identity-row">
+        <span class="identity-chip" id="property-id">Property ID pending</span>
+        <span class="identity-chip source" id="geometry-source">Geometry source pending</span>
+      </div>
+      <div class="metrics-grid">
+        <div class="metric"><span>Parcel</span><strong id="metric-parcel">—</strong></div>
+        <div class="metric"><span>Building</span><strong id="metric-building">—</strong></div>
+        <div class="metric"><span>Height</span><strong id="metric-height">—</strong></div>
+        <div class="metric"><span>Backyard</span><strong id="metric-backyard">—</strong></div>
+      </div>
+      <p class="explanation" id="property-explanation"></p>
+      <div class="provenance" id="model-provenance"><strong>Indicative model.</strong> Loading source details…</div>
+    </section>
+
+    <section class="legend-panel" aria-label="3D model legend">
+      <h3>Selected-property layers</h3>
+      <div class="legend-row"><span class="legend-swatch" style="background:#315a47"></span>Parcel surface</div>
+      <div class="legend-row"><span class="legend-swatch" style="background:#fbbf24"></span>Backyard opportunity zone</div>
+      <div class="legend-row"><span class="legend-swatch" style="background:#8da3bd"></span>Building footprint massing</div>
+      <div class="legend-row"><span class="legend-swatch" style="background:#465970"></span>Procedural roof</div>
+      <div class="legend-row" data-legend="pool"><span class="legend-swatch" style="background:#0ea5e9"></span>Mapped/detected pool</div>
+      <div class="legend-row" data-legend="tree"><span class="legend-swatch" style="background:#22c55e"></span>Mapped vegetation points</div>
+    </section>
+
+    <div class="loader" id="loader">
+      <div class="load-card">
+        <div class="spinner"></div>
+        <strong>Building selected-property model</strong>
+        <span>Loading the exact selection geometry and fitting the scene.</span>
+      </div>
+    </div>
+
+    <div class="error-state" id="error-state" role="alert">
+      <div class="error-card">
+        <p class="eyebrow">3D model unavailable</p>
+        <h2 id="error-title">This selection has no usable parcel geometry</h2>
+        <p id="error-message">Return to the map and select a property with geometry.</p>
+        <div class="error-actions">
+          <a href="/">← Return to the map</a>
+          <a class="secondary" href="/dashboard?module=pool_3d">Open property leads</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    window.setTimeout(() => {
+      if (document.documentElement.dataset.modelStatus !== 'loading') return;
+      const error = document.getElementById('error-state');
+      const loader = document.getElementById('loader');
+      document.getElementById('error-title').textContent = 'The 3D renderer did not load';
+      document.getElementById('error-message').textContent = 'Check the network connection used to load the keyless 3D rendering library, then retry.';
+      error.classList.add('visible');
+      loader.classList.add('hidden');
+    }, 15000);
+  </script>
+  <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+  <script type="module" src="/static/js/model3d.js"></script>
+</body>
+</html>

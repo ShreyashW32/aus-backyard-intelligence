@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>AUS Backyard Intelligence</title>
+  <!-- MapLibre GL JS — open-source (MIT) WebGL map engine, no API keys/tokens. -->
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.5.0/dist/maplibre-gl.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/viewer.css">
+</head>
+<body>
+  <div id="map-wrap">
+    <div id="map-area">
+      <div id="map"></div>
+      <iframe id="map-iframe" class="google-map-frame" title="Embedded map" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; gyroscope; fullscreen" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; display: none; opacity: 1; z-index: 2; transition: opacity 180ms ease;"></iframe>
+      <iframe id="map-iframe-buffer" class="google-map-frame" title="Buffered embedded map" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; gyroscope; fullscreen" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; display: none; opacity: 0; z-index: 1; transition: opacity 180ms ease;"></iframe>
+      <div id="search-box">
+        <input type="text" id="search-input" placeholder="Search location..." autocomplete="off">
+        <button id="locate-btn" title="Navigate to Live Location">Locate</button>
+        <button id="search-btn" title="Search Location">Search</button>
+        <div id="search-results"></div>
+      </div>
+      <div id="osiris-intel-panel" aria-live="polite">
+        <div class="osiris-scan-row">
+          <div class="osiris-autocomplete">
+            <input type="text" id="osiris-area-input" value="Sydney NSW" autocomplete="off" spellcheck="false" aria-label="Australian area or suburb" aria-autocomplete="list" aria-controls="osiris-area-suggestions" role="combobox" aria-expanded="false">
+            <ul id="osiris-area-suggestions" class="osiris-suggestions" role="listbox" hidden></ul>
+          </div>
+          <input type="number" id="osiris-pass-input" min="3" max="40" value="12" aria-label="Scan passes">
+          <button type="button" id="osiris-place-scan-btn" title="Start background lead scan">Scan</button>
+        </div>
+        <div class="osiris-metric-grid">
+          <div><strong id="osiris-pool-count">0</strong><span>Pools</span></div>
+          <div><strong id="osiris-solar-count">0</strong><span>Solar (experimental)</span></div>
+          <div><strong id="osiris-structure-count">0</strong><span>Sites</span></div>
+          <div><strong id="osiris-leads-count">0</strong><span>Leads</span></div>
+        </div>
+        <div id="osiris-intel-status" class="osiris-intel-status">Search a suburb, set passes, then Scan for leads.</div>
+        <div class="osiris-layer-list">
+          <label><input type="checkbox" id="osiris-layer-pools" checked> Selected-area pool cache</label>
+        </div>
+        <div id="osiris-pool-list" class="osiris-pool-list">
+          <div class="osiris-empty">No pools loaded for the selected area yet.</div>
+        </div>
+        <a id="leads-dashboard-link" class="leads-dashboard-link" href="/dashboard?module=pool_3d&area=Sydney%20NSW" target="_blank" rel="noopener">Open leads dashboard</a>
+        <button type="button" id="export-csv-btn" class="leads-dashboard-link" title="Download every cached detection (pools + solar arrays) as a spreadsheet-ready CSV">Export detections (CSV)</button>
+      </div>
+      <div class="draw-hint" id="draw-hint" aria-hidden="true">
+        <div class="dot"></div>
+        <span>Click to place points · double-click or click the start point to finish · then Enter to analyse · Ctrl+Z to undo</span>
+      </div>
+      <div class="vertex-count" id="vertex-count">Vertices: 0</div>
+      <!-- CAD-style floating cursor readout: live segment length + accumulated area -->
+      <div id="measure-tooltip" aria-hidden="true"></div>
+      <div class="loader" id="map-loader"><div class="spinner"></div></div>
+
+      <!-- Premium Google Maps Style Floating Controls -->
+      <div class="custom-map-controls">
+        <button class="custom-control-btn" id="ctrl-pegman" title="Click anywhere on the map to open Street View">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="#facc15" style="display: block;">
+            <circle cx="12" cy="4" r="3" />
+            <path d="M12 8c-2 0-3 1-3 3v5h2v6h2v-6h2v-5c0-2-1-3-3-3z" />
+          </svg>
+        </button>
+        <button class="custom-control-btn" id="ctrl-tilt-mode" title="Toggle 3D View Angle">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
+            <path d="M20 20H4V4L20 20Z" />
+            <line x1="8" y1="20" x2="8" y2="17" stroke="currentColor" />
+            <line x1="12" y1="20" x2="12" y2="14" stroke="currentColor" />
+            <line x1="16" y1="20" x2="16" y2="11" stroke="currentColor" />
+          </svg>
+        </button>
+        <button class="custom-control-btn" id="ctrl-3d" title="Toggle Extruded 3D Buildings">3D</button>
+        <button class="custom-control-btn" id="ctrl-compass" title="Reset Map Orientation & Tilt">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="display: block;">
+            <circle cx="12" cy="12" r="10" stroke="#f1f5f9" />
+            <polygon points="12,5 15,12 12,10" fill="#f87171" stroke="none" />
+            <polygon points="12,19 15,12 12,10" fill="#cbd5e1" stroke="none" />
+            <polygon points="12,5 9,12 12,10" fill="#ef4444" stroke="none" />
+            <polygon points="12,19 9,12 12,10" fill="#cbd5e1" stroke="none" />
+          </svg>
+        </button>
+        <div class="zoom-capsule">
+          <button class="zoom-capsule-btn" id="ctrl-zoom-out" title="Zoom Out">−</button>
+          <div class="zoom-capsule-divider"></div>
+          <button class="zoom-capsule-btn" id="ctrl-zoom-in" title="Zoom In">+</button>
+        </div>
+      </div>
+      
+      <!-- Enterprise Aerial Analytics Panel -->
+      <div id="ai-layers-panel">
+        <div class="ai-layers-header" style="display:flex; justify-content:space-between; align-items:center;">
+          <span>Base Map</span>
+          <span style="font-size:0.58rem; color:#10b981; font-weight:bold; letter-spacing:0.02em;">FOSS · NO KEYS</span>
+        </div>
+        <select id="map-basemap">
+          <option value="au-aerial" selected>Hybrid AU Aerial (Esri + state gov)</option>
+          <option value="esri">Esri World Imagery</option>
+          <option value="google-satellite">Google Satellite tiles</option>
+          <option value="google">Google Maps tiles</option>
+        </select>
+
+        <div class="ai-layers-header">View Perspective</div>
+        <select id="aerial-timeline">
+          <option value="current">Standard 2D view</option>
+          <option value="oblique">Oblique 3D tilt</option>
+        </select>
+        
+        <div class="ai-layers-header">Spatial Overlays</div>
+        <div class="ai-layers-body" style="margin-bottom:10px;">
+          <label class="ai-layer-item">
+            <input type="checkbox" id="overlay-canopy">
+            <span class="color-dot tree" style="background:#34d399;"></span>
+            Mapped Canopy Estimate
+          </label>
+          <label class="ai-layer-item">
+            <input type="checkbox" id="overlay-solar-panels">
+            <span class="color-dot 3d" style="background:#22d3ee;"></span>
+            Experimental solar candidates (unvalidated)
+          </label>
+          <label class="ai-layer-item">
+            <input type="checkbox" id="overlay-solar">
+            <span class="color-dot 3d" style="background:#fbbf24;"></span>
+            Roof Solar Suitability (heuristic)
+          </label>
+          <label class="ai-layer-item">
+            <input type="checkbox" id="overlay-drainage">
+            <span class="color-dot pool" style="background:#60a5fa;"></span>
+            Drainage Contour Overlay
+          </label>
+        </div>
+
+        <div class="ai-layers-header">Selected Area</div>
+        <div class="detector-auto-note">Finishing a selection only saves the area and restores normal map interaction. Press Enter to open Area Analysis.</div>
+        <button type="button" id="draw-area-btn" class="draw-area-btn">Select analysis area</button>
+
+        <div class="ai-layers-header selected-action-header">AI Detection Scans</div>
+        <div class="detector-auto-note">AI detection scan loads pool and mapped feature overlays once. Experimental solar candidates remain off by default because their accuracy is not yet validated. Deep pool scan performs separate multi-pass pool refinement.</div>
+        <div class="ai-layers-body">
+          <label class="ai-layer-item">
+            <input type="checkbox" id="layer-pools" checked>
+            <span class="color-dot pool" style="background:#ef4444;"></span>
+            Pools / Aquatic Venues
+          </label>
+          <label class="ai-layer-item">
+            <input type="checkbox" id="layer-buildings">
+            <span class="color-dot building" style="background:#ec4899;"></span>
+            Mapped Structure Footprints
+          </label>
+          <label class="ai-layer-item">
+            <input type="checkbox" id="layer-trees">
+            <span class="color-dot tree" style="background:#10b981;"></span>
+            Mapped Vegetation / Canopy
+          </label>
+          <label class="ai-layer-item">
+            <input type="checkbox" id="layer-3d">
+            <span class="color-dot 3d" style="background:#f59e0b;"></span>
+            3D Structure Meshes
+          </label>
+        </div>
+        <div id="feature-layer-status" class="feature-layer-status" data-tone="loading" role="status" aria-live="polite">
+          <span class="feature-status-dot" aria-hidden="true"></span>
+          <span id="feature-layer-status-text">Select an area, then choose AI detection scan.</span>
+          <button type="button" id="feature-layer-retry" hidden>Retry</button>
+        </div>
+        <div class="selected-area-actions">
+          <button type="button" id="run-ai-detection-btn" class="run-agent-scan-btn ai-detection-scan-btn">AI detection scan</button>
+        </div>
+        <div class="agent-scan-actions">
+          <label class="agent-pass-control">
+            <span>Passes</span>
+            <input type="number" id="agent-scan-passes" min="3" max="40" value="12">
+          </label>
+          <button type="button" id="run-agent-scan-btn" class="run-agent-scan-btn">Deep pool scan</button>
+        </div>
+        <div id="agent-scan-status" class="agent-scan-status" data-tone="idle">Background scan idle.</div>
+        <div class="manual-pool-actions">
+          <button type="button" id="mark-pool-btn" class="mark-pool-btn" title="Trace a visible but undetected existing pool">Add precise pool</button>
+          <button type="button" id="clear-pools-btn" class="clear-pools-btn" title="Remove precise pool traces" disabled>Clear</button>
+        </div>
+        <div id="manual-pool-count" class="manual-pool-count" hidden>Precise pools: 0</div>
+
+        <label class="agent-auto-toggle" title="Shows evaluation tools and ✓/✗ feedback buttons on detections">
+          <input type="checkbox" id="dev-mode-toggle">
+          Dev mode (evaluation &amp; feedback)
+        </label>
+        <div id="dev-tools" class="dev-tools" hidden>
+          <div class="agent-scan-actions">
+            <button type="button" id="eval-bootstrap-btn" class="run-agent-scan-btn" title="Seed pool/no-pool labels for the current viewport from OpenStreetMap">Bootstrap labels (viewport)</button>
+            <button type="button" id="eval-run-btn" class="run-agent-scan-btn" title="Run the detector over labelled cells and measure precision/recall">Run evaluation</button>
+          </div>
+          <div id="eval-status" class="agent-scan-status" data-tone="idle">No evaluation yet. Just browse — labels auto-collect while dev mode is on.</div>
+          <div id="pipeline-status" class="agent-scan-status" data-tone="idle">Auto-pipeline: waiting for first data…</div>
+          <div class="manual-pool-actions">
+            <a id="feedback-export-link" href="/api/feedback/export" download>Download feedback dataset (.jsonl)</a>
+            <a id="training-export-link" href="/api/eval/training-export" download>Download training dataset (.jsonl)</a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Palantir-style Tactical Intelligence Fusion Panel -->
+      <div id="osint-panel">
+        <div class="osint-header">
+          <span class="osint-title">Tactical Intelligence</span>
+          <label class="osint-switch" title="Fuse live OSINT feeds onto the map">
+            <input type="checkbox" id="osint-toggle">
+            <span class="osint-slider"></span>
+          </label>
+        </div>
+        <div class="osint-legend">
+          <span><i class="osint-dot flight"></i>Airspace (ADS-B)</span>
+          <span><i class="osint-dot fire"></i>Wildfire zones</span>
+          <span><i class="osint-dot camera"></i>CCTV nodes</span>
+          <span><i class="osint-dot incident"></i>Incidents</span>
+          <span><i class="osint-dot quake"></i>Earthquakes</span>
+          <span><i class="osint-dot link"></i>Semantic links</span>
+        </div>
+        <div id="osint-status" class="osint-status">Tactical intelligence layer idle.</div>
+        <div class="osint-note">Keyless public feeds: community ADS-B · NSW RFS / VIC emergency · USGS · OpenStreetMap surveillance nodes. Camera view is a simulated frame — no live video.</div>
+      </div>
+
+    </div>
+    <div id="sv-wrap">
+      <div id="sv-resizer"></div>
+      <div id="sv-placeholder">Click "Street View" to preview the selected area</div>
+      <iframe id="sv-frame" allow="accelerometer; gyroscope;"></iframe>
+    </div>
+  </div>
+
+  <!-- SIDE PANEL -->
+  <div id="side-panel">
+    <div class="sp-inner">
+      <div class="sp-header">
+        <h2 id="sp-title">Area Analysis</h2>
+        <button class="sp-close" id="sp-close">&times;</button>
+      </div>
+      <div class="sp-body" id="sp-body">
+        <div id="pool-warning" style="display:none;background:rgba(14,165,233,0.14);border:1px solid rgba(14,165,233,0.32);color:#bae6fd;padding:10px 12px;border-radius:8px;margin-bottom:12px;font-size:0.78rem;font-weight:500;">
+          Existing pool detected inside the selected area. New-pool lead scoring is not applicable for this footprint.
+        </div>
+        <div class="sp-section"><h3>Selected Area</h3><div id="sp-details"></div></div>
+        <div class="sp-section"><h3>Suitability Ratings</h3><div id="sp-ratings"></div></div>
+        <div class="sp-section"><h3>Property Metrics</h3><div id="sp-metrics"></div></div>
+        <div class="sp-section"><h3>Suitability Assessment (data + heuristics)</h3><div id="sp-explain" class="ai-explain"></div></div>
+      </div>
+      <div class="sp-actions">
+        <a class="sp-btn sv" id="sp-sv" href="#" target="_blank">Street View</a>
+        <a class="sp-btn td disabled" id="sp-3d" href="#" target="_blank" rel="noopener" aria-disabled="true">Choose Property for 3D</a>
+        <a class="sp-btn earth" id="sp-earth" href="#" target="_blank">Google Earth</a>
+        <a class="sp-btn bird" id="sp-bird" href="#" target="_blank" rel="noopener noreferrer">Google Maps</a>
+        <button class="sp-btn qgis" id="sp-qgis" style="grid-column: span 2; background: linear-gradient(135deg, #589632 0%, #3e7221 100%); color: #fff; border-color: #589632; font-weight: bold; font-size: 0.75rem; cursor: pointer;">Export to QGIS (.gpkg)</button>
+        <button class="sp-btn clear" id="sp-clear" style="grid-column: span 2;">✕ Clear Selection</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast notifications -->
+  <div id="toast-container" style="position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:99999; display:flex; flex-direction:column; gap:8px; pointer-events:none;"></div>
+
+  <!-- MapLibre GL JS — open-source WebGL map engine, loaded from unpkg CDN. -->
+  <script src="https://unpkg.com/maplibre-gl@4.5.0/dist/maplibre-gl.js"></script>
+  <script>
+    // If MapLibre failed to load, the viewer module would throw at import time and
+    // the map would be silently black. Surface a clear message instead.
+    if (!window.maplibregl) {
+      console.error('[BOOT] MapLibre GL (maplibregl) is undefined — the CDN script did not load.');
+      var _m = document.getElementById('map');
+      if (_m) {
+        _m.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;'
+          + 'height:100%;color:#bbb;font:14px/1.5 Inter,sans-serif;text-align:center;padding:24px">'
+          + 'Map engine failed to load.<br>Reload the page (Ctrl+Shift+R). If this persists, '
+          + 'this device cannot reach unpkg.com to fetch MapLibre GL JS.</div>';
+      }
+    }
+  </script>
+  <script type="module" src="/static/js/viewer.js"></script>
+  <!-- Build badge: proves which client build this tab is actually running. If the badge
+       is missing or shows an older build, the tab is stale — close it and open a fresh
+       one (plain reloads don't always refresh ES modules). -->
+  <div id="build-badge" style="position:fixed;left:6px;bottom:6px;z-index:1200;font:10px/1.4 monospace;
+       color:#9fe8c9;background:rgba(10,20,16,.75);padding:2px 7px;border-radius:4px;pointer-events:none;">
+    build r30 · Enter-only area analysis · safe scan replacement/reconciliation · selected-area-only AI · accuracy validation is currently Sydney-biased and not a national claim
+  </div>
+</body>
+</html>

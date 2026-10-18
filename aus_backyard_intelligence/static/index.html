@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pool Lead Dashboard</title>
+    <style>
+      :root {
+        --bg: #f5f7fb;
+        --panel: #ffffff;
+        --ink: #172033;
+        --muted: #607086;
+        --line: #d9e1ea;
+        --accent: #0f8b6f;
+        --accent-dark: #0a604d;
+        --warn: #b45309;
+        --bad: #b91c1c;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--ink);
+        background: var(--bg);
+        font-family: "Segoe UI", Arial, sans-serif;
+      }
+
+      a {
+        color: var(--accent-dark);
+        text-decoration: none;
+        font-weight: 700;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .shell {
+        width: min(1280px, calc(100vw - 28px));
+        margin: 0 auto;
+        padding: 22px 0 32px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 1.7rem;
+        line-height: 1.15;
+        font-weight: 800;
+      }
+
+      .subtitle {
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      button,
+      select,
+      input {
+        min-height: 38px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 8px 10px;
+        font: inherit;
+        background: #fff;
+        color: var(--ink);
+      }
+
+      button {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: #fff;
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      button.secondary {
+        background: #fff;
+        color: var(--accent-dark);
+      }
+
+      .filters {
+        display: grid;
+        grid-template-columns: minmax(220px, 1fr) 120px minmax(120px, 160px) 120px auto;
+        gap: 10px;
+        align-items: end;
+        padding: 14px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        margin-bottom: 14px;
+      }
+
+      label {
+        display: grid;
+        gap: 5px;
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .summary {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      .agent-panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 14px;
+        margin-bottom: 14px;
+      }
+
+      .section-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 12px;
+      }
+
+      .section-head h2 {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .agent-status {
+        color: var(--muted);
+        font-size: 0.86rem;
+        line-height: 1.45;
+      }
+
+      .address-config-status {
+        margin-top: 4px;
+        color: #8a5a00;
+        font-size: 0.76rem;
+        line-height: 1.4;
+      }
+
+      .address-config-status.configured {
+        color: var(--accent-dark);
+      }
+
+      .agent-leads {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .agent-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 12px;
+        background: #fbfdff;
+      }
+
+      .agent-card-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: flex-start;
+      }
+
+      .agent-card h3 {
+        margin: 0;
+        font-size: 0.95rem;
+      }
+
+      .lead-address-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        margin-top: 5px;
+      }
+
+      .address-badge {
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid #cbd5e1;
+        border-radius: 999px;
+        padding: 2px 7px;
+        background: #f8fafc;
+        color: #475569;
+        font-size: 0.68rem;
+        font-weight: 900;
+        letter-spacing: 0.02em;
+      }
+
+      .address-badge.verified {
+        border-color: #99d9c3;
+        background: #e1f5ee;
+        color: var(--accent-dark);
+      }
+
+      .address-badge.pending {
+        border-color: #f4d38a;
+        background: #fff8e8;
+        color: #8a5a00;
+      }
+
+      .google-attribution {
+        color: #5e5e5e;
+        font-family: Roboto, Sans-Serif;
+        font-size: 0.75rem;
+        font-style: normal;
+        font-weight: 400;
+        letter-spacing: normal;
+        white-space: nowrap;
+      }
+
+      .lead-coordinates {
+        color: #64748b;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.7rem;
+      }
+
+      .pill {
+        display: inline-block;
+        border-radius: 6px;
+        padding: 3px 7px;
+        background: #e1f5ee;
+        color: var(--accent-dark);
+        font-size: 0.74rem;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      .evidence-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 9px 0;
+      }
+
+      .evidence-row span {
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 3px 7px;
+        color: var(--muted);
+        font-size: 0.74rem;
+        font-weight: 700;
+      }
+
+      .metric {
+        padding: 13px 14px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      .metric span {
+        display: block;
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .metric strong {
+        display: block;
+        margin-top: 5px;
+        font-size: 1.5rem;
+      }
+
+      .table-wrap {
+        overflow: auto;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 980px;
+      }
+
+      th,
+      td {
+        padding: 11px 12px;
+        text-align: left;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+
+      th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: #eef3f8;
+        color: #42526a;
+        font-size: 0.74rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      tbody tr:hover {
+        background: #f8fbfd;
+      }
+
+      .rank {
+        width: 42px;
+        height: 30px;
+        display: inline-grid;
+        place-items: center;
+        border-radius: 6px;
+        background: #e1f5ee;
+        color: var(--accent-dark);
+        font-weight: 800;
+      }
+
+      .score {
+        font-weight: 900;
+        color: var(--accent-dark);
+      }
+
+      .muted {
+        color: var(--muted);
+        font-size: 0.84rem;
+      }
+
+      .contact {
+        display: inline-block;
+        padding: 3px 7px;
+        border-radius: 5px;
+        background: #e1f5ee;
+        color: var(--accent-dark);
+        font-size: 0.74rem;
+        font-weight: 800;
+      }
+
+      .contact.missing {
+        background: #f3f4f6;
+        color: #64748b;
+      }
+
+      .link-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+      }
+
+      .empty {
+        padding: 26px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      @media (max-width: 820px) {
+        .topbar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .actions {
+          justify-content: flex-start;
+        }
+
+        .filters {
+          grid-template-columns: 1fr;
+        }
+
+        .summary {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .agent-leads {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <div class="topbar">
+        <div>
+          <h1 id="area-heading">Sydney NSW</h1>
+          <div class="subtitle">Search an Australian suburb or area, then let the background agent build pool and outdoor-infrastructure leads.</div>
+        </div>
+        <div class="actions">
+          <a href="/viewer" id="open-map-link">Open map interface</a>
+          <button class="secondary" id="download-btn" type="button">Download CSV</button>
+        </div>
+      </div>
+
+      <section class="filters" aria-label="Lead filters">
+        <label>
+          Area or Suburb
+          <input id="area-query" value="Sydney NSW" autocomplete="off" />
+        </label>
+        <label>
+          Radius km
+          <input id="radius-km" type="number" min="0.5" max="12" step="0.5" value="3" />
+        </label>
+        <label>
+          Lead Type
+          <select id="module">
+            <option value="pool_3d" selected>Pool 3D</option>
+            <option value="pool_2d">Pool 2D</option>
+            <option value="fence">Fence</option>
+            <option value="deck">Deck / Patio</option>
+          </select>
+        </label>
+        <label>
+          Limit
+          <input id="top-k" type="number" min="1" max="100" value="25" />
+        </label>
+        <button id="scan-area-btn" type="button">Find Leads</button>
+      </section>
+
+      <section class="summary" aria-label="Lead summary">
+        <div class="metric"><span>Area</span><strong id="metric-area">Moreton Bay</strong></div>
+        <div class="metric"><span>Leads</span><strong id="metric-count">0</strong></div>
+        <div class="metric"><span>Top Score</span><strong id="metric-top">-</strong></div>
+        <div class="metric"><span>With Contact</span><strong id="metric-contact">0</strong></div>
+      </section>
+
+      <section class="agent-panel" aria-label="Background area agent">
+        <div class="section-head">
+          <div>
+            <h2>Background Area Agent</h2>
+            <div id="agent-summary" class="agent-status">No background scans yet.</div>
+            <div id="address-config-status" class="address-config-status"></div>
+          </div>
+          <a href="/viewer">Run scan</a>
+        </div>
+        <div id="agent-leads" class="agent-leads"></div>
+        <div id="agent-empty" class="empty">No background scan leads yet. Draw or scan an area from the map interface.</div>
+      </section>
+
+      <section class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Potential Property</th>
+              <th>Score</th>
+              <th>Lead Evidence</th>
+              <th>Contact</th>
+              <th>Links</th>
+            </tr>
+          </thead>
+          <tbody id="lead-body"></tbody>
+        </table>
+        <div id="empty-state" class="empty" hidden>No matching leads found.</div>
+      </section>
+    </main>
+
+    <script>
+      const areaEl = document.getElementById("area-query");
+      const radiusEl = document.getElementById("radius-km");
+      const moduleEl = document.getElementById("module");
+      const topKEl = document.getElementById("top-k");
+      const leadBody = document.getElementById("lead-body");
+      const emptyState = document.getElementById("empty-state");
+      const scanAreaBtn = document.getElementById("scan-area-btn");
+      const downloadBtn = document.getElementById("download-btn");
+      const areaHeading = document.getElementById("area-heading");
+      const openMapLink = document.getElementById("open-map-link");
+      const agentSummary = document.getElementById("agent-summary");
+      const addressConfigStatus = document.getElementById("address-config-status");
+      const agentLeads = document.getElementById("agent-leads");
+      const agentEmpty = document.getElementById("agent-empty");
+      let agentDashboardInFlight = false;
+
+      const metricArea = document.getElementById("metric-area");
+      const metricCount = document.getElementById("metric-count");
+      const metricTop = document.getElementById("metric-top");
+      const metricContact = document.getElementById("metric-contact");
+
+      const params = new URLSearchParams(window.location.search);
+      areaEl.value = params.get("area") || "Sydney NSW";
+      if (params.has("module")) moduleEl.value = params.get("module") || "pool_3d";
+
+      function escapeHtml(value) {
+        return String(value ?? "").replace(/[&<>'"]/g, (character) => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          "'": "&#39;",
+          '"': "&quot;"
+        })[character]);
+      }
+
+      function scoreText(value) {
+        return `${Number(value || 0).toFixed(1)} / 100`;
+      }
+
+      function isCoordinatePlaceholder(value) {
+        const text = String(value || "").trim();
+        return /^potential property near\s+-?\d+(?:\.\d+)?,\s*-?\d+(?:\.\d+)?$/i.test(text)
+          || /^-?\d+(?:\.\d+)?,\s*-?\d+(?:\.\d+)?$/.test(text);
+      }
+
+      function addressTokenLabel(value) {
+        const token = String(value || "").trim().toLowerCase();
+        const known = {
+          google: "Google Maps",
+          google_maps: "Google Maps",
+          osm: "OpenStreetMap",
+          openstreetmap: "OpenStreetMap",
+          nominatim: "OpenStreetMap Nominatim",
+          openstreetmap_nominatim: "OpenStreetMap Nominatim",
+          unavailable: "Address source unavailable",
+          cadastre: "Cadastre",
+          pending: "Address lookup",
+          rooftop: "Rooftop",
+          subpremise: "Unit/subpremise",
+          unit: "Unit-level",
+          premise: "Premise",
+          street: "Street only",
+          street_address: "Street address",
+          geometric_center: "Geometric centre",
+          interpolated: "Interpolated",
+          nearest: "Nearest address",
+          approximate: "Approximate",
+          unknown: "Unknown precision"
+        };
+        if (known[token]) return known[token];
+        return token
+          ? token.replace(/[_-]+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase())
+          : "";
+      }
+
+      function leadAddressView(item) {
+        const details = item && typeof item.address_details === "object" && item.address_details
+          ? item.address_details
+          : {};
+        const status = String(details.status || "").trim().toLowerCase();
+        const formatted = String(details.formatted || details.formatted_address || "").trim();
+        const pending = details.pending === true || ["pending", "lookup_pending", "resolving"].includes(status);
+        // A verification flag without a normalized address is an invalid/incomplete
+        // contract. Never fall back to a coordinate-shaped title and call it exact.
+        const verified = Boolean(formatted) && (details.verified === true || status === "verified");
+        const legacyTitle = String(item?.title || "").trim();
+        const coordinatePlaceholder = isCoordinatePlaceholder(legacyTitle);
+
+        let label = "Address not verified";
+        if (pending) label = "Address lookup pending";
+        else if (formatted) label = formatted;
+
+        const source = addressTokenLabel(details.source) || "Source unavailable";
+        const googleAttribution = ["google", "google_maps"].includes(
+          String(details.source || "").trim().toLowerCase()
+        );
+        const precision = addressTokenLabel(details.precision)
+          || (verified ? "Verified match" : pending ? "Lookup pending" : "Unknown precision");
+        const state = verified ? "verified" : pending ? "pending" : "unverified";
+        const stateLabel = verified ? "Verified" : pending ? "Pending" : "Not verified";
+        const explicitUnit = String(details.unit || "").trim();
+        const availableUnits = String(details.available_units || "").trim();
+        const unitLabel = verified
+          ? explicitUnit
+            ? `Explicit unit ${explicitUnit}`
+            : availableUnits
+              ? "Multiple mapped units; selected unit not identified"
+              : "Unit not identified"
+          : "";
+        const hasLat = item?.lat !== null && item?.lat !== undefined && item?.lat !== "";
+        const hasLon = item?.lon !== null && item?.lon !== undefined && item?.lon !== "";
+        const lat = Number(item?.lat);
+        const lon = Number(item?.lon);
+        const coordinates = hasLat && hasLon && Number.isFinite(lat) && Number.isFinite(lon)
+          ? `${lat.toFixed(6)}, ${lon.toFixed(6)}`
+          : "";
+        return { label, source, precision, state, stateLabel, unitLabel, coordinates, coordinatePlaceholder, googleAttribution };
+      }
+
+      function safeExternalUrl(value) {
+        const url = String(value || "").trim();
+        return /^https?:\/\//i.test(url) ? url : "";
+      }
+
+      function updateAreaTitle(area) {
+        const label = area || "Sydney NSW";
+        areaHeading.textContent = label;
+        metricArea.textContent = label;
+        document.title = `${label} Pool Leads`;
+        openMapLink.href = `/viewer?module=${encodeURIComponent(moduleEl.value)}&area=${encodeURIComponent(label)}`;
+      }
+
+      function rankingQueryString() {
+        return new URLSearchParams({
+          module: moduleEl.value,
+          lga: areaEl.value.toLowerCase().includes("moreton") ? "Moreton Bay" : "",
+          top_k: topKEl.value || "25"
+        }).toString();
+      }
+
+      function renderRows(items) {
+        leadBody.innerHTML = items.map((item) => {
+          const features = item.derived_features || {};
+          const owner = item.owner || {};
+          const links = item.links || {};
+          const contactClass = item.contact_available === "yes" ? "contact" : "contact missing";
+          const contactLabel = item.contact_available === "yes" ? "Contact available" : "Open-source lookup";
+          return `
+            <tr>
+              <td><span class="rank">#${escapeHtml(item.rank)}</span></td>
+              <td>
+                <strong>${escapeHtml(item.address)}</strong>
+                <div class="muted">${escapeHtml(item.suburb)}, ${escapeHtml(item.lga)} · ${escapeHtml(item.property_id)}</div>
+              </td>
+              <td><span class="score">${scoreText(item.module_score)}</span></td>
+              <td>
+                <div>${escapeHtml(item.explanation)}</div>
+                <div class="muted">Backyard ${escapeHtml(features.backyard_area_sqm)} sqm · Slope ${escapeHtml(features.slope_pct)}% · Access ${escapeHtml(features.max_side_clearance_m)} m</div>
+              </td>
+              <td>
+                <span class="${contactClass}">${contactLabel}</span>
+                <div class="muted">${escapeHtml(owner.name || "Verify via public records")}</div>
+                ${owner.phone ? `<div><a href="tel:${escapeHtml(owner.phone)}">${escapeHtml(owner.phone)}</a></div>` : ""}
+                ${owner.email ? `<div><a href="mailto:${escapeHtml(owner.email)}">${escapeHtml(owner.email)}</a></div>` : ""}
+              </td>
+              <td>
+                <div class="link-row">
+                  ${links.google_maps ? `<a href="${escapeHtml(links.google_maps)}" target="_blank" rel="noopener">Maps</a>` : ""}
+                  ${links.street_view ? `<a href="${escapeHtml(links.street_view)}" target="_blank" rel="noopener">Street View</a>` : ""}
+                  ${links.viewer ? `<a href="${escapeHtml(links.viewer)}" target="_blank" rel="noopener">Viewer</a>` : ""}
+                  ${links.property_api ? `<a href="${escapeHtml(links.property_api)}" target="_blank" rel="noopener">JSON</a>` : ""}
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join("");
+        emptyState.hidden = items.length > 0;
+      }
+
+      function renderAgentScans(scans) {
+        const latest = scans[0];
+        if (!latest) {
+          agentSummary.textContent = "No background scans yet.";
+          return;
+        }
+        const counts = latest.counts || {};
+        const done = latest.passes_completed || 0;
+        const total = latest.passes_total || latest.passes_requested || 0;
+        const progress = (latest.blocks || 1) > 1
+          ? `${done}/${total} block-scans`
+          : `${done}/${total} sweeps`;
+        agentSummary.textContent = `${latest.label || "Selected area"} · ${latest.status} · ${progress} · ${counts.pools || 0} pools · ${counts.buildings || 0} structures · ${Array.isArray(latest.leads) ? latest.leads.length : 0} leads`;
+      }
+
+      function renderAddressLookupStatus(config) {
+        const googleConfigured = config && config.google_configured === true;
+        addressConfigStatus.className = `address-config-status${googleConfigured ? " configured" : ""}`;
+        addressConfigStatus.textContent = googleConfigured
+          ? "Google rooftop address verification enabled. Unit numbers appear only when explicitly supplied."
+          : "Google exact-address lookup is not configured; fallback addresses are approximate and units are never guessed.";
+      }
+
+      function renderAgentLeads(items) {
+        agentLeads.innerHTML = items.map((item) => {
+          const evidence = item.evidence || {};
+          const links = item.links || {};
+          const contact = item.contact || {};
+          const address = leadAddressView(item);
+          const published = contact.status === "published_osm";
+          const contactBits = [];
+          if (contact.name) contactBits.push(escapeHtml(contact.name));
+          if (contact.phone) contactBits.push(`<a href="tel:${escapeHtml(contact.phone)}">${escapeHtml(contact.phone)}</a>`);
+          if (contact.email) contactBits.push(`<a href="mailto:${escapeHtml(contact.email)}">${escapeHtml(contact.email)}</a>`);
+          if (contact.website) contactBits.push(`<a href="${escapeHtml(contact.website)}" target="_blank" rel="noopener">Website</a>`);
+          const contactHtml = contactBits.length
+            ? `<div class="contact">${contactBits.join(" · ")}</div>`
+            : `<div class="contact missing">${escapeHtml(contact.note || "No published contact — use the lawful lookup links below.")}</div>`;
+          const link = (url, label) => {
+            const safeUrl = safeExternalUrl(url);
+            return safeUrl ? `<a href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener">${label}</a>` : "";
+          };
+          const addressSource = address.googleAttribution
+            ? `<span class="google-attribution" translate="no">Google Maps</span>`
+            : escapeHtml(address.source);
+          return `
+            <article class="agent-card">
+              <div class="agent-card-top">
+                <div>
+                  <h3>${escapeHtml(address.label)}</h3>
+                  <div class="lead-address-meta">
+                    <span class="address-badge ${escapeHtml(address.state)}">${addressSource} · ${escapeHtml(address.precision)} · ${escapeHtml(address.stateLabel)}</span>
+                    ${address.unitLabel ? `<span class="address-badge ${escapeHtml(address.state)}">${escapeHtml(address.unitLabel)}</span>` : ""}
+                    ${address.coordinates ? `<span class="lead-coordinates">${escapeHtml(address.coordinates)}</span>` : ""}
+                  </div>
+                </div>
+                <span class="pill">${scoreText(item.score)}</span>
+              </div>
+              <div class="muted">${escapeHtml(item.scan_label || item.scan_id || "Area scan")}</div>
+              <p>${escapeHtml(item.pitch)}</p>
+              <div class="evidence-row">
+                <span>${escapeHtml(evidence.footprint_sqm || 0)} m² footprint</span>
+                <span>${escapeHtml(evidence.neighbour_pools || 0)} pools nearby</span>
+                <span>${escapeHtml(evidence.nearby_trees || 0)} green features</span>
+                <span>${escapeHtml(evidence.nearby_powerlines || 0)} powerlines</span>
+              </div>
+              ${contactHtml}
+              <div class="link-row">
+                ${link(links.google_maps, "Maps")}
+                ${link(links.street_view, "Street View")}
+                ${address.state === "verified" ? link(links.realestate, "realestate.com.au") : ""}
+                ${address.state === "verified" ? link(links.domain, "Domain") : ""}
+                ${link(links.land_titles, "Land titles")}
+                ${link(links.pool_register, "Pool register")}
+                ${address.state === "verified" ? link(links.planning, "Planning") : ""}
+                ${link(links.business_lookup, "Business")}
+              </div>
+            </article>
+          `;
+        }).join("");
+        agentEmpty.hidden = items.length > 0;
+        metricCount.textContent = String(items.length);
+        metricTop.textContent = items.length ? scoreText(items[0].score) : "-";
+        const withContact = items.filter((it) => (it.contact || {}).status === "published_osm").length;
+        metricContact.textContent = String(withContact);
+      }
+
+      async function loadAgentDashboard() {
+        if (agentDashboardInFlight) return;
+        agentDashboardInFlight = true;
+        try {
+          const [scanResponse, leadResponse] = await Promise.all([
+            fetch("/api/agent/scans?limit=5"),
+            fetch("/api/agent/leads?limit=24")
+          ]);
+          const scanPayload = await scanResponse.json().catch(() => ({}));
+          const leadPayload = await leadResponse.json().catch(() => ({}));
+          if (!scanResponse.ok) throw new Error(scanPayload.error || `Scan request failed (${scanResponse.status})`);
+          if (!leadResponse.ok) throw new Error(leadPayload.error || `Agent leads failed (${leadResponse.status})`);
+          renderAgentScans(Array.isArray(scanPayload.items) ? scanPayload.items : []);
+          renderAgentLeads(Array.isArray(leadPayload.items) ? leadPayload.items : []);
+          renderAddressLookupStatus(leadPayload.address_lookup || {});
+        } catch (error) {
+          agentSummary.textContent = `Background agent unavailable: ${error.message}`;
+          agentLeads.innerHTML = "";
+          agentEmpty.hidden = false;
+        } finally {
+          agentDashboardInFlight = false;
+        }
+      }
+
+      async function loadSampleCatalog() {
+        try {
+          const response = await fetch(`/api/rankings?${rankingQueryString()}`);
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(payload.error || `Lead request failed (${response.status})`);
+          const areaIsSample = areaEl.value.toLowerCase().includes("moreton");
+          const items = areaIsSample && Array.isArray(payload.items) ? payload.items : [];
+          renderRows(items);
+          if (!areaIsSample) {
+            emptyState.hidden = false;
+            emptyState.textContent = "Sample property catalog is available for Moreton Bay only. Use the background area agent above for Sydney and other Australian areas.";
+          }
+        } catch (error) {
+          leadBody.innerHTML = "";
+          emptyState.hidden = false;
+          emptyState.textContent = `Could not load sample catalog: ${error.message}`;
+        }
+      }
+
+      async function scanArea() {
+        const area = areaEl.value.trim();
+        if (!area) return;
+        scanAreaBtn.disabled = true;
+        scanAreaBtn.textContent = "Scanning...";
+        updateAreaTitle(area);
+        try {
+          const response = await fetch("/api/agent/scan-place", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              area,
+              radius_km: radiusEl.value || 3,
+              passes: Math.max(3, Math.min(40, Number(topKEl.value || 12)))
+            })
+          });
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(payload.error || `Area scan failed (${response.status})`);
+          metricArea.textContent = area;
+          metricCount.textContent = "Scanning";
+          metricTop.textContent = "-";
+          metricContact.textContent = "Lookup";
+          agentSummary.textContent = `Started ${payload.passes_requested || 12}-pass scan for ${payload.place?.display_name || area}.`;
+          await loadAgentDashboard();
+          await loadSampleCatalog();
+        } catch (error) {
+          agentSummary.textContent = `Area scan failed: ${error.message}`;
+        } finally {
+          scanAreaBtn.disabled = false;
+          scanAreaBtn.textContent = "Find Leads";
+        }
+      }
+
+      function downloadCsv() {
+        window.location.href = `/api/rankings.csv?${rankingQueryString()}`;
+      }
+
+      scanAreaBtn.addEventListener("click", scanArea);
+      areaEl.addEventListener("keydown", event => {
+        if (event.key === "Enter") scanArea();
+      });
+      downloadBtn.addEventListener("click", downloadCsv);
+      moduleEl.addEventListener("change", () => updateAreaTitle(areaEl.value));
+      areaEl.addEventListener("input", () => updateAreaTitle(areaEl.value));
+      window.addEventListener("load", () => {
+        updateAreaTitle(areaEl.value);
+        loadSampleCatalog();
+        loadAgentDashboard();
+        window.setInterval(loadAgentDashboard, 10000);
+      });
+    </script>
+  </body>
+</html>

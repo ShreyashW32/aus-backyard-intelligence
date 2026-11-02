@@ -9,7 +9,7 @@
     "test": "npm run test:js && npm run test:e2e"
   },
   "devDependencies": {
-    "maplibre-gl": "4.5.0",
+    "maplibre-gl": "6.16.0",
     "playwright": "1.61.1"
   }
 }
